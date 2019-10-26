@@ -1,3 +1,13 @@
 #!/bin/bash
 
-time fio --output raw-device.txt raw-device.ini && tail -n 48 raw-device-report.txt
+set -e -u -o pipefail
+
+_main() {
+	time measure_raw_devices
+}
+
+measure_raw_devices() {
+	fio --output raw-device.txt raw-device.ini && tail -n 48 raw-device-report.txt
+}
+
+_main "$@"
