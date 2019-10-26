@@ -6,6 +6,7 @@ set -x
 _main() {
 	time measure_raw_devices
 	time measure_journal_async_commit /dev/sdc
+	time measure_journal_sync /dev/sdd
 }
 
 measure_raw_devices() {
@@ -25,14 +26,23 @@ measure_journal_data() {
 	local device
 	device=$1
 
-	mount_and_measure_fs "${device}" data=journal journal_async_commit_data_journal.txt
+	mount_and_measure_fs "${device}" journal_async_commit,data=journal journal_async_commit_data_journal.txt
 }
 
 measure_journal_data_writeback() {
 	local device
 	device=$1
 
-	mount_and_measure_fs "${device}" data=writeback journal_async_commit_data_writeback.txt
+	mount_and_measure_fs "${device}" journal_async_commit,data=writeback journal_async_commit_data_writeback.txt
+}
+
+measure_journal_sync() {
+	local device
+	device=$1
+	mkfs.ext4 -v -F -E lazy_itable_init=0 "${device}"
+
+	mount_and_measure_fs "${device}" data=ordered data_ordered.txt
+	mount_and_measure_fs "${device}" data=writeback data_writeback.txt
 }
 
 mount_and_measure_fs() {
@@ -41,7 +51,7 @@ mount_and_measure_fs() {
 	mntopts=$2
 	report_filename=$3
 
-	sudo mount -o defaults,commit=600,journal_async_commit,"${mntopts}" "${device}" /mnt
+	sudo mount -o defaults,commit=600,"${mntopts}" "${device}" /mnt
 	sudo chown "${USER}:${USER}" /mnt
 	fio --output "${report_filename}" fs.ini
 	sudo umount /mnt
