@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sudo setfacl -m user:$USER:rw /dev/sda3 # journal device on SSD
+sudo setfacl -m user:$USER:rw /dev/sd{b,c,d}
